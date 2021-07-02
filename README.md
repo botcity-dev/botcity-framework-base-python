@@ -19,10 +19,6 @@
 
 # Prerequisites
 * Python 3.7+
-* pyautogui
-* keyboard
-* pyperclip
-* opencv
 
 Python package requirements are listed in the requirements.txt file, which can
 be used to install all requirements from pip: 'pip install -r requirements.txt'
