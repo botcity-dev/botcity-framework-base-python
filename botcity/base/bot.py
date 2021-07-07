@@ -1,5 +1,8 @@
+import os
+import pathlib
 import sys
 from os import path
+from PIL import Image
 
 
 class BaseBot:
@@ -29,6 +32,25 @@ class BaseBot:
     def _resources_path(self, resource_folder="resources"):
         path_to_class = sys.modules[self.__module__].__file__
         return path.join(path.dirname(path.realpath(path_to_class)), resource_folder)
+
+    def _search_image_file(self, label):
+        img_path = self.state.map_images.get(label)
+        if img_path:
+            return img_path
+
+        search_path = [self.get_resource_abspath(""), os.getcwd()]
+        for sp in search_path:
+            path = pathlib.Path(sp)
+            found = path.glob(f"{label}.*")
+            for f in found:
+                try:
+                    img = Image.open(f)
+                except Exception:
+                    continue
+                else:
+                    img.close()
+                return str(f.absolute())
+        return None
 
     @classmethod
     def main(cls):

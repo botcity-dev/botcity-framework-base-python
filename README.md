@@ -19,6 +19,7 @@
 
 # Prerequisites
 * Python 3.7+
+* Pillow
 
 Python package requirements are listed in the requirements.txt file, which can
 be used to install all requirements from pip: 'pip install -r requirements.txt'
