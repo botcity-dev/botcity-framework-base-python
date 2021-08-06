@@ -73,6 +73,7 @@ class BaseBot:
                 parameters = bot.maestro.get_task(task_id).parameters
 
                 execution = BotExecution(server, task_id, token, parameters)
+                bot.execution = execution
             else:
                 raise RuntimeError("Your setup is missing the botcity-maestro-sdk package. "
                                    "Please install it with: pip install botcity-maestro-sdk")
