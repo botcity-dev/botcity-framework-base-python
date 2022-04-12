@@ -53,7 +53,9 @@ class BaseBot:
         return None
 
     def _image_path_as_image(self, path):
-        return Image.open(path)
+        if path:
+            return Image.open(path)
+        return None
 
     @classmethod
     def main(cls):
