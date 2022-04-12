@@ -52,6 +52,9 @@ class BaseBot:
                 return str(f.absolute())
         return None
 
+    def _image_path_as_image(self, path):
+        return Image.open(path)
+
     @classmethod
     def main(cls):
         try:
