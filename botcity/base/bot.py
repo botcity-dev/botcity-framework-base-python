@@ -30,16 +30,62 @@ class BaseBot:
         return path.join(self._resources_path(resource_folder), filename)
 
     def _resources_path(self, resource_folder="resources"):
-        path_to_class = sys.modules[self.__module__].__file__
-        return path.join(path.dirname(path.realpath(path_to_class)), resource_folder)
+        # This checks if this is a pyinstaller binary
+        # More info here: https://pyinstaller.org/en/stable/runtime-information.html#run-time-information
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            klass_name = self.__class__.__name__
+            res_path = os.path.join(sys._MEIPASS, klass_name, "resources")
+        else:
+            res_path = sys.modules[self.__module__].__file__
+        return path.join(path.dirname(path.realpath(res_path)), resource_folder)
 
     def _search_image_file(self, label):
+        """
+        When finding images, this is the priority in which we will look into:
+            - map_images: This is a highly customized place that takes precedence over everything else
+            - If this is not a pyinstaller binary:
+                - "resources" folder parallel to the Bot class file.
+                - "resources" folder parallel to the current working dir
+            - If this is a pyinstaller binary:
+                - "resources" folder at sys._MEIPASS/<package>/
+                - "resources" folder parallel to the sys._MEIPASS folder
+                - sys._MEIPASS
+            - current working dir
+        """
+
+        # map_images
         img_path = self.state.map_images.get(label)
         if img_path:
             return img_path
 
-        search_path = [self.get_resource_abspath(""), os.getcwd()]
-        for sp in search_path:
+
+        # list of locations by priority
+        locations = []
+
+
+        # This checks if this is a pyinstaller binary
+        # More info here: https://pyinstaller.org/en/stable/runtime-information.html#run-time-information
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+
+            # "resources" folder at sys._MEIPASS/<package>/
+            locations.append(self.get_resource_abspath(""))
+            # "resources" folder parallel to the sys._MEIPASS folder
+            locations.append(os.path.join(sys._MEIPASS, "resources"))
+            # sys._MEIPASS
+            locations.append(sys._MEIPASS)
+        else:
+            # This is a regular project not binary file.
+
+            # "resources" folder parallel to the Bot class file.
+            locations.append(self.get_resource_abspath(""))
+
+        # "resources" folder parallel to the current working dir
+        locations.append(os.path.join(os.getcwd(), "resources"))
+
+        # current working dir
+        locations.append(os.getcwd())
+
+        for sp in locations:
             path = pathlib.Path(sp)
             found = path.glob(f"{label}.*")
             for f in found:
@@ -51,6 +97,8 @@ class BaseBot:
                     img.close()
                 return str(f.absolute())
         return None
+
+
 
     def _image_path_as_image(self, path):
         if path:
