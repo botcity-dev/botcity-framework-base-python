@@ -2,6 +2,7 @@ import os
 import pathlib
 import sys
 from os import path
+
 from PIL import Image
 
 
@@ -58,10 +59,8 @@ class BaseBot:
         if img_path:
             return img_path
 
-
         # list of locations by priority
         locations = []
-
 
         # This checks if this is a pyinstaller binary
         # More info here: https://pyinstaller.org/en/stable/runtime-information.html#run-time-information
@@ -98,8 +97,6 @@ class BaseBot:
                 return str(f.absolute())
         return None
 
-
-
     def _image_path_as_image(self, path):
         if path:
             return Image.open(path)
@@ -108,7 +105,7 @@ class BaseBot:
     @classmethod
     def main(cls):
         try:
-            from botcity.maestro import BotMaestroSDK, BotExecution
+            from botcity.maestro import BotExecution, BotMaestroSDK
             maestro_available = True
         except ImportError:
             maestro_available = False
