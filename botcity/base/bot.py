@@ -1,3 +1,4 @@
+import inspect
 import os
 import pathlib
 import sys
@@ -46,6 +47,7 @@ class BaseBot:
             - map_images: This is a highly customized place that takes precedence over everything else
             - If this is not a pyinstaller binary:
                 - "resources" folder parallel to the Bot class file.
+                - "resources" folder parallel to the `find` caller file. (cookiecutter Both)
                 - "resources" folder parallel to the current working dir
             - If this is a pyinstaller binary:
                 - "resources" folder at sys._MEIPASS/<package>/
@@ -77,6 +79,15 @@ class BaseBot:
 
             # "resources" folder parallel to the Bot class file.
             locations.append(self.get_resource_abspath(""))
+
+            # "resources" folder parallel to the `find` caller file.
+            try:
+                caller = inspect.currentframe().f_back.f_back
+                caller_filename = inspect.getframeinfo(caller).filename
+                caller_dir = os.path.dirname(caller_filename)
+                locations.append(os.path.join(caller_dir, "resources"))
+            except:  # noqa: E722
+                pass
 
         # "resources" folder parallel to the current working dir
         locations.append(os.path.join(os.getcwd(), "resources"))
