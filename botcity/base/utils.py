@@ -1,21 +1,32 @@
-from functools import wraps
 import platform
 import subprocess
+from functools import wraps
+
+import yaml
 
 
 def is_retina():
     """
-    Check whether or not the system is running in "retina" display mode.
+    Check whether or not if the system's Main Display is running in "retina" display mode.
 
     Returns:
     (bool)
     """
     if platform.system() == 'Darwin':
-        check = subprocess.call("system_profiler SPDisplaysDataType | grep -i 'retina'", shell=True,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if check == 0:
-            return True
-    return False
+        proc = subprocess.run(["system_profiler SPDisplaysDataType"], shell=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output = proc.stdout.decode("utf-8")
+
+        displays_data = output[output.rfind("Displays:"):]
+        displays = yaml.safe_load(displays_data).get("Displays", {})
+        retina = False
+        for _, d in displays.items():
+            if d.get("Main Display", False):
+                resolution = d.get("Resolution", "").lower()
+                display_type = d.get("Display Type", "").lower()
+                if "retina" in resolution or "retina" in display_type:
+                    retina = True
+    return retina
 
 
 def only_if_element(func):
@@ -47,6 +58,7 @@ def find_bot_class(module):
         klass (type): A class that inherits from BaseBot.
     """
     import inspect
+
     from botcity.base import BaseBot
 
     klass = [obj for name, obj in inspect.getmembers(module) if
