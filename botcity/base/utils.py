@@ -19,14 +19,13 @@ def is_retina():
 
         displays_data = output[output.rfind("Displays:"):]
         displays = yaml.safe_load(displays_data).get("Displays", {})
-        retina = False
         for _, d in displays.items():
             if d.get("Main Display", False):
                 resolution = d.get("Resolution", "").lower()
                 display_type = d.get("Display Type", "").lower()
                 if "retina" in resolution or "retina" in display_type:
-                    retina = True
-    return retina
+                    return True
+    return False
 
 
 def only_if_element(func):
