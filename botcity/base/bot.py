@@ -41,6 +41,11 @@ class BaseBot:
             res_path = sys.modules[self.__module__].__file__
         return path.join(path.dirname(path.realpath(res_path)), resource_folder)
 
+    def _get_frame_path(self, frame):
+        frame_filename = inspect.getframeinfo(frame).filename
+        frame_dir = os.path.dirname(frame_filename)
+        return frame_dir
+
     def _search_image_file(self, label):
         """
         When finding images, this is the priority in which we will look into:
@@ -82,10 +87,12 @@ class BaseBot:
 
             # "resources" folder parallel to the `find` caller file.
             try:
-                caller = inspect.currentframe().f_back.f_back
-                caller_filename = inspect.getframeinfo(caller).filename
-                caller_dir = os.path.dirname(caller_filename)
-                locations.append(os.path.join(caller_dir, "resources"))
+                frame = inspect.currentframe()
+                while frame is not None:
+                    caller_dir = self._get_frame_path(frame)
+                    caller_path = os.path.join(caller_dir, "resources")
+                    locations.append(caller_path)
+                    frame = frame.f_back
             except:  # noqa: E722
                 pass
 
@@ -125,7 +132,7 @@ class BaseBot:
         execution = None
         # TODO: Refactor this later for proper parameters to be passed
         #       in a cleaner way
-        if len(sys.argv) == 4:
+        if len(sys.argv) >= 4:
             if maestro_available:
                 server, task_id, token = sys.argv[1:4]
                 bot.maestro = BotMaestroSDK(server=server)
