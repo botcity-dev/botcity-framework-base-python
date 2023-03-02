@@ -8,6 +8,32 @@ from PIL import Image
 
 
 class BaseBot:
+
+    def __init__(self, *args, **kwargs):
+        self._resource_folder_name = "resources"
+
+    @property
+    def resource_folder_name(self) -> str:
+        """The name used for the resources folder
+        when looking for files.
+
+        Returns:
+            str: The folder name for resources. Defaults to `resources`
+        """
+        return self._resource_folder_name or "resources"
+
+    @resource_folder_name.setter
+    def resource_folder_name(self, name: str):
+        """The name used for the resources folder
+        whe looking for files.
+
+        Args:
+            name (str): The folder name for resources. Defaults to `resources`
+        """
+        if not name:
+            raise ValueError("Resources folder name must not be None nor empty.")
+        self._resource_folder_name = name
+
     def action(self, execution=None):
         """
         Execute an automation action.
@@ -18,7 +44,7 @@ class BaseBot:
         """
         raise NotImplementedError("You must implement this method.")
 
-    def get_resource_abspath(self, filename, resource_folder="resources"):
+    def get_resource_abspath(self, filename, resource_folder=None):
         """
         Compose the resource absolute path taking into account the package path.
 
@@ -29,14 +55,17 @@ class BaseBot:
         Returns:
             abs_path (str): The absolute path to the file.
         """
+        resource_folder = resource_folder or self.resource_folder_name
         return path.join(self._resources_path(resource_folder), filename)
 
-    def _resources_path(self, resource_folder="resources"):
+    def _resources_path(self, resource_folder=None):
         # This checks if this is a pyinstaller binary
         # More info here: https://pyinstaller.org/en/stable/runtime-information.html#run-time-information
+        resource_folder = resource_folder or self.resource_folder_name
+
         if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
             klass_name = self.__class__.__name__
-            res_path = os.path.join(sys._MEIPASS, klass_name, "resources")
+            res_path = os.path.join(sys._MEIPASS, klass_name, resource_folder)
         else:
             res_path = sys.modules[self.__module__].__file__
         return path.join(path.dirname(path.realpath(res_path)), resource_folder)
@@ -60,6 +89,7 @@ class BaseBot:
                 - sys._MEIPASS
             - current working dir
         """
+        resource_folder = self.resource_folder_name
 
         # map_images
         img_path = self.state.map_images.get(label)
@@ -76,7 +106,7 @@ class BaseBot:
             # "resources" folder at sys._MEIPASS/<package>/
             locations.append(self.get_resource_abspath(""))
             # "resources" folder parallel to the sys._MEIPASS folder
-            locations.append(os.path.join(sys._MEIPASS, "resources"))
+            locations.append(os.path.join(sys._MEIPASS, resource_folder))
             # sys._MEIPASS
             locations.append(sys._MEIPASS)
         else:
@@ -90,14 +120,14 @@ class BaseBot:
                 frame = inspect.currentframe()
                 while frame is not None:
                     caller_dir = self._get_frame_path(frame)
-                    caller_path = os.path.join(caller_dir, "resources")
+                    caller_path = os.path.join(caller_dir, resource_folder)
                     locations.append(caller_path)
                     frame = frame.f_back
             except:  # noqa: E722
                 pass
 
         # "resources" folder parallel to the current working dir
-        locations.append(os.path.join(os.getcwd(), "resources"))
+        locations.append(os.path.join(os.getcwd(), resource_folder))
 
         # current working dir
         locations.append(os.getcwd())
