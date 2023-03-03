@@ -20,6 +20,8 @@ class BaseBot:
         Returns:
             str: The folder name for resources. Defaults to `resources`
         """
+        if not hasattr(self, "_resource_folder_name"):
+            self._resource_folder_name = "resources"
         return self._resource_folder_name or "resources"
 
     @resource_folder_name.setter
